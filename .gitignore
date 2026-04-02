@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Flet build / cache files
+.flet/
+.flet_build/
+.flet_packages/
+.flet_assets/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and database
+*.log
+*.sqlite3
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Others
+*.egg-info/
+dist/
+build/
