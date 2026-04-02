@@ -25,6 +25,7 @@ Thumbs.db
 # IDE / Editor
 .vscode/
 .idea/
+UniFind - Flet.code-workspace
 
 # Others
 *.egg-info/
