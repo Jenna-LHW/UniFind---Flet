@@ -25,6 +25,15 @@ def refresh_token(refresh):
     r = requests.post(f'{BASE}/auth/refresh/', json={'refresh': refresh})
     return r.status_code, r.json()
 
+# ── Profile ── 
+def get_my_lost_items():
+    r = requests.get(f'{BASE}/lost-items/?mine=true', headers=_headers())
+    return r.status_code, r.json()
+
+def get_my_found_items():
+    r = requests.get(f'{BASE}/found-items/?mine=true', headers=_headers())
+    return r.status_code, r.json()
+
 # ── Lost Items ──
 def report_lost_item(data, photo_path=None):
     access, _ = load_tokens()
