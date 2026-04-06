@@ -12,8 +12,11 @@ from views.report_found import report_found_view
 from views.profile      import profile_view
 from views.reviews      import reviews_view
 from views.contact      import contact_view
+from views.item_detail  import item_detail_view
+from views.submit_claim import submit_claim_view
 from storage            import load_tokens
 
+# Static routes
 ROUTES = {
     'login':        login_view,
     'register':     register_view,
@@ -31,13 +34,14 @@ BROWN  = '#5c4f3a'
 LIGHT  = '#f5f2ee'
 NAV_BG = '#ede9e3'
 
+
 def main(page: ft.Page):
-    page.title          = 'UniFind'
-    page.bgcolor        = LIGHT
-    page.padding        = 0
-    page.theme_mode     = ft.ThemeMode.LIGHT
-    page.window_width   = 420
-    page.window_height  = 800
+    page.title        = 'UniFind'
+    page.bgcolor      = LIGHT
+    page.padding      = 0
+    page.theme_mode   = ft.ThemeMode.LIGHT
+    page.window_width  = 420
+    page.window_height = 800
 
     current_route = {'name': None}
 
@@ -49,14 +53,37 @@ def main(page: ft.Page):
         route = current_route['name']
         page.controls.clear()
 
-        # Build content
-        view_fn = ROUTES.get(route, home_view)
-        content = view_fn(page, go)
-
-        # Nav bar (hide on login/register)
-        show_nav = route not in ('login', 'register')
         access, _ = load_tokens()
-        is_auth = bool(access)
+        is_auth   = bool(access)
+
+        # ── Dynamic routes ──────────────────────────────────
+        # item_detail_lost_<pk>  →  item_detail_view(lost, pk)
+        # item_detail_found_<pk> →  item_detail_view(found, pk)
+        # submit_claim_lost_<pk> →  submit_claim_view(lost, pk)
+        # submit_claim_found_<pk>→  submit_claim_view(found, pk)
+        content = None
+
+        if route and route.startswith('item_detail_'):
+            parts     = route.split('_')   # ['item','detail','lost/found','pk']
+            item_type = parts[2]
+            item_id   = int(parts[3])
+            content   = item_detail_view(page, go, item_type, item_id)
+
+        elif route and route.startswith('submit_claim_'):
+            if not is_auth:
+                go('login')
+                return
+            parts     = route.split('_')   # ['submit','claim','lost/found','pk']
+            item_type = parts[2]
+            item_id   = int(parts[3])
+            content   = submit_claim_view(page, go, item_type, item_id)
+
+        else:
+            view_fn = ROUTES.get(route, home_view)
+            content = view_fn(page, go)
+
+        # ── Nav bar ─────────────────────────────────────────
+        show_nav = route not in ('login', 'register')
 
         nav = ft.NavigationBar(
             bgcolor=NAV_BG,
@@ -64,24 +91,18 @@ def main(page: ft.Page):
             selected_index=_nav_index(route),
             on_change=lambda e: _on_nav(e, go, is_auth),
             destinations=[
-                ft.NavigationBarDestination(icon=ft.Icons.HOME_OUTLINED,     selected_icon=ft.Icons.HOME,          label='Home'),
-                ft.NavigationBarDestination(icon=ft.Icons.SEARCH_OUTLINED,   selected_icon=ft.Icons.SEARCH,        label='Lost'),
+                ft.NavigationBarDestination(icon=ft.Icons.HOME_OUTLINED,        selected_icon=ft.Icons.HOME,        label='Home'),
+                ft.NavigationBarDestination(icon=ft.Icons.SEARCH_OUTLINED,      selected_icon=ft.Icons.SEARCH,      label='Lost'),
                 ft.NavigationBarDestination(icon=ft.Icons.INVENTORY_2_OUTLINED, selected_icon=ft.Icons.INVENTORY_2, label='Found'),
-                ft.NavigationBarDestination(icon=ft.Icons.STAR_OUTLINE,      selected_icon=ft.Icons.STAR,          label='Reviews'),
-                ft.NavigationBarDestination(icon=ft.Icons.PERSON_OUTLINE,    selected_icon=ft.Icons.PERSON,        label='Profile'),
+                ft.NavigationBarDestination(icon=ft.Icons.STAR_OUTLINE,         selected_icon=ft.Icons.STAR,        label='Reviews'),
+                ft.NavigationBarDestination(icon=ft.Icons.PERSON_OUTLINE,       selected_icon=ft.Icons.PERSON,      label='Profile'),
             ],
         ) if show_nav else None
 
-        # Top app bar
         appbar = ft.AppBar(
             leading=ft.Container(
-                content=ft.Image(
-                    src='assets/logo.png',
-                    fit="contain",
-                ),
-                width=48,
-                height=48,
-                padding=4,
+                content=ft.Image(src='assets/logo.png', fit='contain'),
+                width=48, height=48, padding=4,
             ),
             leading_width=56,
             title=ft.Column([
@@ -91,7 +112,7 @@ def main(page: ft.Page):
             bgcolor=NAV_BG,
             actions=[
                 ft.IconButton(ft.Icons.MAIL_OUTLINE, icon_color=BROWN,
-                            tooltip='Contact', on_click=lambda e: go('contact')),
+                              tooltip='Contact', on_click=lambda e: go('contact')),
                 ft.IconButton(
                     ft.Icons.LOGOUT if is_auth else ft.Icons.LOGIN,
                     icon_color=BROWN,
@@ -102,21 +123,13 @@ def main(page: ft.Page):
         ) if show_nav else None
 
         page.appbar = appbar
-
         page.add(
-            ft.Container(
-                content=content,
-                padding=ft.Padding.all(16),
-                expand=True,
-            )
+            ft.Container(content=content, padding=ft.Padding.all(16), expand=True)
         )
-
         if nav:
             page.navigation_bar = nav
-
         page.update()
 
-    # Decide start route
     access, _ = load_tokens()
     go('home' if access else 'login')
 
@@ -141,4 +154,4 @@ def _on_nav(e, go, is_auth):
         go(target)
 
 
-ft.app(target=main, assets_dir='assets')
+ft.app(main, assets_dir='assets')

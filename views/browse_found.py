@@ -33,7 +33,7 @@ def browse_found_view(page: ft.Page, go):
             results.controls.append(ft.Text('No found items reported.', color='#7a7670'))
         else:
             for item in items:
-                results.controls.append(_item_card(item))
+                results.controls.append(_item_card(item, go))
 
         page.update()
 
@@ -53,60 +53,72 @@ def browse_found_view(page: ft.Page, go):
                 ], spacing=2),
                 ft.Container(expand=True),
                 ft.ElevatedButton('Report Found', bgcolor='#3b5c38', color='white',
-                                  on_click=lambda e: go('report_found'),
-                                  icon=ft.Icons.ADD),
+                                  on_click=lambda e: go('report_found'), icon=ft.Icons.ADD),
             ]),
-            padding=20,
-            bgcolor='white',
-            border_radius=12,
+            padding=20, bgcolor='white', border_radius=12,
             border=ft.Border.all(1, '#d6d1c8'),
         ),
-
         ft.Container(
             content=ft.Row([
                 keyword_field,
                 category_field,
-                ft.IconButton(ft.Icons.SEARCH, on_click=do_search, bgcolor='#3b5c38', icon_color='white'),
+                ft.IconButton(ft.Icons.SEARCH, on_click=do_search,
+                              bgcolor='#3b5c38', icon_color='white'),
             ], spacing=10),
-            padding=16,
-            bgcolor='white',
-            border_radius=12,
+            padding=16, bgcolor='white', border_radius=12,
             border=ft.Border.all(1, '#d6d1c8'),
         ),
-
         error_text,
         loading,
         results,
     ], spacing=16, scroll=ft.ScrollMode.AUTO)
 
 
-def _item_card(item):
-    return ft.Container(
-        content=ft.Row([
-            ft.Container(
-                content=ft.Text(item.get('category', 'other').upper()[:3],
-                                color='white', size=11, weight=ft.FontWeight.BOLD),
-                bgcolor='#3b5c38',
-                padding=ft.Padding.symmetric(horizontal=8, vertical=4),
-                border_radius=6,
-                width=48,
-                alignment=ft.Alignment(0, 0),
-            ),
-            ft.Column([
-                ft.Text(item.get('item_name', ''), size=15, weight=ft.FontWeight.W_600, color='#2c2c2a'),
-                ft.Text(f"📍 {item.get('found_at', '')[:40]}", size=12, color='#7a7670'),
-                ft.Text(f"📅 {item.get('date_found', '')}", size=11, color='#7a7670'),
-            ], spacing=3, expand=True),
-            ft.Container(
-                content=ft.Text(item.get('status', '').capitalize(), size=11,
-                                weight=ft.FontWeight.BOLD, color='#3b6d11'),
-                bgcolor='#eaf3de',
-                padding=ft.Padding.symmetric(horizontal=8, vertical=4),
-                border_radius=20,
-            ),
-        ], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-        padding=16,
-        bgcolor='white',
-        border_radius=12,
-        border=ft.Border.all(1, '#d6d1c8'),
+def _item_card(item, go):
+    photo_url = item.get('photo_url')
+    item_id   = item.get('id')
+
+    if photo_url:
+        photo = ft.Image(src=photo_url, width=72, height=72, fit='cover', border_radius=8)
+    else:
+        photo = ft.Container(
+            content=ft.Icon(ft.Icons.IMAGE_NOT_SUPPORTED, color='#b4b2a9', size=24),
+            width=72, height=72, bgcolor='#f5f2ee', border_radius=8,
+            alignment=ft.Alignment(0, 0),
+        )
+
+    return ft.GestureDetector(
+        on_tap=lambda e: go(f'item_detail_found_{item_id}'),
+        content=ft.Container(
+            content=ft.Row([
+                photo,
+                ft.Container(width=4),
+                ft.Column([
+                    ft.Row([
+                        ft.Container(
+                            content=ft.Text(item.get('category', 'other').upper()[:3],
+                                            color='white', size=11, weight=ft.FontWeight.BOLD),
+                            bgcolor='#3b5c38',
+                            padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                            border_radius=6,
+                        ),
+                        ft.Container(expand=True),
+                        ft.Container(
+                            content=ft.Text(item.get('status', '').capitalize(),
+                                            size=11, weight=ft.FontWeight.BOLD, color='#3b6d11'),
+                            bgcolor='#eaf3de',
+                            padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                            border_radius=20,
+                        ),
+                    ]),
+                    ft.Text(item.get('item_name', ''), size=15, weight=ft.FontWeight.W_600,
+                            color='#2c2c2a', max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
+                    ft.Text(f"📍 {item.get('found_at', '')[:40]}", size=12, color='#7a7670'),
+                    ft.Text(f"📅 {item.get('date_found', '')}", size=11, color='#7a7670'),
+                ], spacing=4, expand=True),
+                ft.Icon(ft.Icons.CHEVRON_RIGHT, color='#b4b2a9', size=18),
+            ], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+            padding=16, bgcolor='white', border_radius=12,
+            border=ft.border.all(1, '#d6d1c8'),
+        ),
     )

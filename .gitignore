@@ -31,3 +31,5 @@ UniFind - Flet.code-workspace
 *.egg-info/
 dist/
 build/
+
+.token.json

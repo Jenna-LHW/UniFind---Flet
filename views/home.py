@@ -33,9 +33,8 @@ def home_view(page: ft.Page, go):
         badge_text  = 'FOUND'   if is_found else 'LOST'
         location    = item.get('found_at') or item.get('last_seen', '')
         date        = item.get('date_found') or item.get('date_lost', '')
-        photo_url   = item.get('photo')
+        photo_url = item.get('photo_url')
 
-        # Photo area
         if photo_url:
             full_url = photo_url if photo_url.startswith('http') else BASE_URL + photo_url
             photo = ft.Image(
@@ -43,9 +42,7 @@ def home_view(page: ft.Page, go):
                 width=220,
                 height=140,
                 fit="cover",
-                border_radius=ft.border_radius.only(
-                    top_left=10, top_right=10
-                ),
+                border_radius=ft.border_radius.only(top_left=10, top_right=10),
             )
         else:
             photo = ft.Container(
