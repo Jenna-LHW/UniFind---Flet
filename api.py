@@ -138,3 +138,20 @@ def submit_claim(item_type, item_id, details):
 def get_my_claims():
     r = requests.get(f'{BASE}/claims/', headers=_headers())
     return r.status_code, r.json()
+
+# ── Notifications ──
+def get_notifications():
+    r = requests.get(f'{BASE}/notifications/', headers=_headers())
+    return r.status_code, r.json()
+
+def mark_notification_read(notif_id):
+    r = requests.patch(
+        f'{BASE}/notifications/{notif_id}/',
+        json={'is_read': True},
+        headers=_headers()
+    )
+    return r.status_code
+
+def mark_all_notifications_read():
+    r = requests.post(f'{BASE}/notifications/mark-all-read/', headers=_headers())
+    return r.status_code

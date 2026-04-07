@@ -30,7 +30,7 @@ def profile_view(page: ft.Page, go):
     if status != 200:
         clear_tokens()
         go('login')
-        return ft.Text('')
+        return ft.Container()
 
     _, lost_data  = get_my_lost_items()
     _, found_data = get_my_found_items()

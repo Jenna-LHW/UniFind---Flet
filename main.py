@@ -1,4 +1,5 @@
 import flet as ft
+import threading, time
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -15,6 +16,7 @@ from views.contact      import contact_view
 from views.item_detail  import item_detail_view
 from views.submit_claim import submit_claim_view
 from storage            import load_tokens
+from api import get_notifications, mark_notification_read, mark_all_notifications_read
 
 # Static routes
 ROUTES = {
@@ -45,6 +47,137 @@ def main(page: ft.Page):
 
     current_route = {'name': None}
 
+    notif_list  = []          # full list fetched from API
+    panel_open  = {'v': False}
+
+    badge = ft.Container(
+        content=ft.Text('0', size=9, color='white', weight=ft.FontWeight.BOLD),
+        bgcolor='red',
+        border_radius=10,
+        padding=ft.Padding.symmetric(horizontal=4, vertical=1),
+        visible=False,
+    )
+
+    def build_notif_panel():
+        unread = [n for n in notif_list if not n['is_read']]
+        rows   = []
+
+        if not notif_list:
+            rows.append(ft.Text('No notifications yet.', color='#7a7670',
+                                size=13, italic=True))
+        else:
+            for n in notif_list[:20]:               # cap at 20
+                is_read = n['is_read']
+                rows.append(
+                    ft.Container(
+                        content=ft.Row([
+                            ft.Container(width=6, height=6, border_radius=3,
+                                         bgcolor='red' if not is_read else 'transparent'),
+                            ft.Column([
+                                ft.Text(n['title'], size=13,
+                                        weight=ft.FontWeight.BOLD if not is_read
+                                               else ft.FontWeight.NORMAL,
+                                        color='#2c2c2a'),
+                                ft.Text(n['body'][:80] + ('…' if len(n['body']) > 80 else ''),
+                                        size=11, color='#7a7670'),
+                            ], spacing=2, expand=True),
+                        ], spacing=8),
+                        padding=10,
+                        bgcolor='#fdfaf6' if not is_read else 'white',
+                        border=ft.Border.only(bottom=ft.BorderSide(1, '#f0ece6')),
+                        on_click=lambda e, n=n: on_notif_tap(n),
+                        border_radius=8,
+                    )
+                )
+
+        actions = []
+        if unread:
+            actions.append(
+                ft.TextButton('Mark all read', on_click=on_mark_all)
+            )
+
+        return ft.Container(
+            content=ft.Column([
+                ft.Row([
+                    ft.Text('Notifications', size=14,
+                            weight=ft.FontWeight.BOLD, color=BROWN),
+                    ft.IconButton(ft.Icons.CLOSE, icon_size=16,
+                                  on_click=lambda e: close_panel()),
+                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                ft.Divider(height=1),
+                ft.Column(rows, spacing=4, scroll=ft.ScrollMode.AUTO,
+                          height=300),
+                *actions,
+            ], spacing=8),
+            width=320,
+            padding=16,
+            bgcolor='white',
+            border_radius=12,
+            border=ft.Border.all(1, '#d6d1c8'),
+            shadow=ft.BoxShadow(blur_radius=16, color='#22000000',
+                                offset=ft.Offset(0, 4)),
+        )
+
+    notif_overlay = ft.Container(visible=False)   # placeholder, replaced on open
+
+    def open_panel(e):
+        panel_open['v'] = True
+        notif_overlay.content = build_notif_panel()
+        notif_overlay.visible = True
+        page.overlay.append(notif_overlay) if notif_overlay not in page.overlay else None
+        page.update()
+
+    def close_panel():
+        panel_open['v'] = False
+        notif_overlay.visible = False
+        page.update()
+
+    def on_notif_tap(n):
+        mark_notification_read(n['id'])
+        n['is_read'] = True          # update local copy immediately
+        close_panel()
+        if n.get('item_type') and n.get('item_id'):
+            go(f"item_detail_{n['item_type']}_{n['item_id']}")
+
+    def on_mark_all(e):
+        mark_all_notifications_read()
+        for n in notif_list:
+            n['is_read'] = True
+        refresh_badge()
+        close_panel()
+
+    def refresh_badge():
+        unread = sum(1 for n in notif_list if not n['is_read'])
+        badge.content = ft.Text(str(unread), size=9, color='white',
+                                weight=ft.FontWeight.BOLD)
+        badge.visible = unread > 0
+        page.update()
+
+    def poll_notifications():
+        """Background thread — polls every 15 s."""
+        while True:
+            access, _ = load_tokens()
+            if access:
+                s, data = get_notifications()
+                if s == 200 and isinstance(data, list):
+                    notif_list.clear()
+                    notif_list.extend(data)
+                    refresh_badge()
+            time.sleep(15)
+
+    bell_btn = ft.Stack([
+        ft.IconButton(
+            ft.Icons.NOTIFICATIONS_OUTLINED,
+            icon_color=BROWN,
+            tooltip='Notifications',
+            on_click=open_panel,
+        ),
+        ft.Container(badge, right=4, top=4),   # badge sits top-right of bell
+    ])
+
+    # Start polling thread (daemon so it dies with the app)
+    threading.Thread(target=poll_notifications, daemon=True).start()
+
     def go(route_name):
         current_route['name'] = route_name
         render()
@@ -70,7 +203,7 @@ def main(page: ft.Page):
             content   = item_detail_view(page, go, item_type, item_id)
 
         elif route and route.startswith('submit_claim_'):
-            if not is_auth:
+            if route == 'profile' and not is_auth:
                 go('login')
                 return
             parts     = route.split('_')   # ['submit','claim','lost/found','pk']
@@ -95,7 +228,7 @@ def main(page: ft.Page):
                 ft.NavigationBarDestination(icon=ft.Icons.SEARCH_OUTLINED,      selected_icon=ft.Icons.SEARCH,      label='Lost'),
                 ft.NavigationBarDestination(icon=ft.Icons.INVENTORY_2_OUTLINED, selected_icon=ft.Icons.INVENTORY_2, label='Found'),
                 ft.NavigationBarDestination(icon=ft.Icons.STAR_OUTLINE,         selected_icon=ft.Icons.STAR,        label='Reviews'),
-                ft.NavigationBarDestination(icon=ft.Icons.PERSON_OUTLINE,       selected_icon=ft.Icons.PERSON,      label='Profile'),
+                ft.NavigationBarDestination(icon=ft.Icons.MAIL_OUTLINE,         selected_icon=ft.Icons.MAIL,        label='Contact'),
             ],
         ) if show_nav else None
 
@@ -111,14 +244,8 @@ def main(page: ft.Page):
             ], spacing=0),
             bgcolor=NAV_BG,
             actions=[
-                ft.IconButton(ft.Icons.MAIL_OUTLINE, icon_color=BROWN,
-                              tooltip='Contact', on_click=lambda e: go('contact')),
-                ft.IconButton(
-                    ft.Icons.LOGOUT if is_auth else ft.Icons.LOGIN,
-                    icon_color=BROWN,
-                    tooltip='Logout' if is_auth else 'Login',
-                    on_click=lambda e: go('login'),
-                ),
+                ft.IconButton(ft.Icons.PERSON_OUTLINE, icon_color=BROWN, tooltip='Profile', on_click=lambda e: go('profile')),
+                bell_btn
             ],
         ) if show_nav else None
 
@@ -140,15 +267,16 @@ def _nav_index(route):
         'browse_lost':  1,
         'browse_found': 2,
         'reviews':      3,
-        'profile':      4,
+        'contact':      4,
     }
     return mapping.get(route, 0)
 
 
-def _on_nav(e, go, is_auth):
-    routes = ['home', 'browse_lost', 'browse_found', 'reviews', 'profile']
+def _on_nav(e, go, is_auth): 
+    routes = ['home', 'browse_lost', 'browse_found', 'reviews', 'contact']
     target = routes[e.control.selected_index]
-    if target in ('reviews', 'profile') and not is_auth:
+ 
+    if target == 'reviews' and not is_auth:
         go('login')
     else:
         go(target)
