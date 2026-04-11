@@ -3,18 +3,20 @@ import threading, time
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 
-from views.login        import login_view
-from views.register     import register_view
-from views.home         import home_view
-from views.browse_lost  import browse_lost_view
-from views.browse_found import browse_found_view
-from views.report_lost  import report_lost_view
-from views.report_found import report_found_view
-from views.profile      import profile_view
-from views.reviews      import reviews_view
-from views.contact      import contact_view
-from views.item_detail  import item_detail_view
-from views.submit_claim import submit_claim_view
+from views.login         import login_view
+from views.register      import register_view
+from views.home          import home_view
+from views.browse_lost   import browse_lost_view
+from views.browse_found  import browse_found_view
+from views.report_lost   import report_lost_view
+from views.report_found  import report_found_view
+from views.profile       import profile_view
+from views.edit_profile  import edit_profile_view
+from views.reviews       import reviews_view
+from views.contact       import contact_view
+from views.about         import about_view
+from views.item_detail   import item_detail_view
+from views.submit_claim  import submit_claim_view
 from storage            import load_tokens
 from api import get_notifications, mark_notification_read, mark_all_notifications_read
 
@@ -28,8 +30,10 @@ ROUTES = {
     'report_lost':  report_lost_view,
     'report_found': report_found_view,
     'profile':      profile_view,
+    'edit_profile': edit_profile_view,
     'reviews':      reviews_view,
     'contact':      contact_view,
+    'about':        about_view,
 }
 
 BROWN  = '#5c4f3a'
@@ -234,7 +238,7 @@ def main(page: ft.Page):
 
         appbar = ft.AppBar(
             leading=ft.Container(
-                content=ft.Image(src='assets/logo.png', fit='contain'),
+                content=ft.Image(src='logo.png', fit='contain'),
                 width=48, height=48, padding=4,
             ),
             leading_width=56,
@@ -244,6 +248,7 @@ def main(page: ft.Page):
             ], spacing=0),
             bgcolor=NAV_BG,
             actions=[
+                ft.IconButton(ft.Icons.INFO_OUTLINE,   icon_color=BROWN, tooltip='About',   on_click=lambda e: go('about')),
                 ft.IconButton(ft.Icons.PERSON_OUTLINE, icon_color=BROWN, tooltip='Profile', on_click=lambda e: go('profile')),
                 bell_btn
             ],
@@ -282,4 +287,4 @@ def _on_nav(e, go, is_auth):
         go(target)
 
 
-ft.app(main, assets_dir='assets')
+ft.run(main, assets_dir='assets')

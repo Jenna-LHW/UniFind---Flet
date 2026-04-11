@@ -21,6 +21,10 @@ def get_user():
     r = requests.get(f'{BASE}/auth/user/', headers=_headers())
     return r.status_code, r.json()
 
+def update_profile(data):
+    r = requests.patch(f'{BASE}/auth/user/', json=data, headers=_headers())
+    return r.status_code, r.json()
+
 def refresh_token(refresh):
     r = requests.post(f'{BASE}/auth/refresh/', json={'refresh': refresh})
     return r.status_code, r.json()
@@ -114,6 +118,10 @@ def get_reviews():
 def post_review(data):
     r = requests.post(f'{BASE}/reviews/', json=data, headers=_headers())
     return r.status_code, r.json()
+
+def like_review(review_id):
+    r = requests.post(f'{BASE}/reviews/{review_id}/like/', headers=_headers())
+    return r.status_code, r.json() if r.content else {}
 
 # ── Contact ──
 def send_contact(data):

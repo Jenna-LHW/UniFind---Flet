@@ -239,12 +239,19 @@ def profile_view(page: ft.Page, go):
         # Actions
         ft.Row([
             ft.ElevatedButton(
+                'Edit Profile',
+                icon=ft.Icons.EDIT_OUTLINED,
+                bgcolor=BROWN,
+                color='white',
+                on_click=lambda e: go('edit_profile'),
+            ),
+            ft.ElevatedButton(
                 'Log Out',
                 icon=ft.Icons.LOGOUT,
                 bgcolor='#e8e2d9',
                 color=BROWN,
                 on_click=do_logout,
             ),
-        ]),
+        ], spacing=12),
 
     ], spacing=16, scroll=ft.ScrollMode.AUTO)

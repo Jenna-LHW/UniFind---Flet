@@ -44,7 +44,7 @@ def item_detail_view(page: ft.Page, go, item_type: str, item_id: int):
         category   = item.get('category', '').replace('_', ' ').title()
         description= item.get('description', '')
         status_val = item.get('status', '')
-        reported_by= item.get('user', '')
+        reported_by= item.get('reported_by', '')
         submitted  = item.get('submitted_at', '')[:10]
 
         if item_type == 'lost':

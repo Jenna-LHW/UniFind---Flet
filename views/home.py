@@ -2,7 +2,6 @@ import flet as ft
 from api import get_lost_items, get_found_items
 from storage import load_tokens
 
-BASE_URL = 'http://127.0.0.1:8000'
 
 def home_view(page: ft.Page, go):
     page.title = 'UniFind — Home'
@@ -36,14 +35,8 @@ def home_view(page: ft.Page, go):
         photo_url = item.get('photo_url')
 
         if photo_url:
-            full_url = photo_url if photo_url.startswith('http') else BASE_URL + photo_url
-            photo = ft.Image(
-                src=full_url,
-                width=220,
-                height=140,
-                fit="cover",
-                border_radius=ft.border_radius.only(top_left=10, top_right=10),
-            )
+             photo = ft.Image(src=photo_url, width=220, height=140, fit="cover",
+                     border_radius=ft.border_radius.only(top_left=10, top_right=10))
         else:
             photo = ft.Container(
                 content=ft.Icon(ft.Icons.IMAGE_NOT_SUPPORTED, color='#b4b2a9', size=32),
