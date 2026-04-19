@@ -71,24 +71,48 @@ def main(page: ft.Page):
                                 size=13, italic=True))
         else:
             for n in notif_list[:20]:               # cap at 20
-                is_read = n['is_read']
+                is_read   = n['is_read']
+                is_match  = n.get('notification_type') == 'match'
+
+                if is_match and not is_read:
+                    dot_color = '#e67e22'       
+                    row_bg    = '#fff8e7'       
+                    border_color = '#f5d98a'
+                elif not is_read:
+                    dot_color = 'red'
+                    row_bg    = '#fdfaf6'
+                    border_color = '#f0ece6'
+                else:
+                    dot_color = 'transparent'
+                    row_bg    = 'white'
+                    border_color = '#f0ece6'
+
+                leading_icon = ft.Icon(
+                    ft.Icons.COMPARE_ARROWS_ROUNDED,
+                    size=16,
+                    color='#e67e22',
+                ) if is_match else ft.Container(
+                    width=6, height=6, border_radius=3,
+                    bgcolor=dot_color,
+                )
+
                 rows.append(
                     ft.Container(
                         content=ft.Row([
-                            ft.Container(width=6, height=6, border_radius=3,
-                                         bgcolor='red' if not is_read else 'transparent'),
+                            leading_icon,
                             ft.Column([
                                 ft.Text(n['title'], size=13,
                                         weight=ft.FontWeight.BOLD if not is_read
                                                else ft.FontWeight.NORMAL,
                                         color='#2c2c2a'),
-                                ft.Text(n['body'][:80] + ('…' if len(n['body']) > 80 else ''),
+                                ft.Text(n['body'][:90] + ('…' if len(n['body']) > 90 else ''),
                                         size=11, color='#7a7670'),
                             ], spacing=2, expand=True),
                         ], spacing=8),
                         padding=10,
-                        bgcolor='#fdfaf6' if not is_read else 'white',
-                        border=ft.Border.only(bottom=ft.BorderSide(1, '#f0ece6')),
+                        bgcolor=row_bg,
+                        border=ft.Border.all(1, border_color) if is_match and not is_read
+                               else ft.Border.only(bottom=ft.BorderSide(1, border_color)),
                         on_click=lambda e, n=n: on_notif_tap(n),
                         border_radius=8,
                     )
@@ -98,6 +122,15 @@ def main(page: ft.Page):
         if unread:
             actions.append(
                 ft.TextButton('Mark all read', on_click=on_mark_all)
+            )
+
+        has_matches = any(n.get('notification_type') == 'match' for n in notif_list[:20])
+        if has_matches:
+            actions.append(
+                ft.Row([
+                    ft.Icon(ft.Icons.COMPARE_ARROWS_ROUNDED, size=12, color='#e67e22'),
+                    ft.Text(' = Potential item match', size=10, color='#9a8f80', italic=True),
+                ], spacing=2)
             )
 
         return ft.Container(
@@ -113,7 +146,7 @@ def main(page: ft.Page):
                           height=300),
                 *actions,
             ], spacing=8),
-            width=320,
+            width=340,
             padding=16,
             bgcolor='white',
             border_radius=12,
@@ -151,10 +184,13 @@ def main(page: ft.Page):
         close_panel()
 
     def refresh_badge():
-        unread = sum(1 for n in notif_list if not n['is_read'])
-        badge.content = ft.Text(str(unread), size=9, color='white',
+        unread       = [n for n in notif_list if not n['is_read']]
+        unread_count = len(unread)
+        has_match    = any(n.get('notification_type') == 'match' for n in unread)
+        badge.content = ft.Text(str(unread_count), size=9, color='white',
                                 weight=ft.FontWeight.BOLD)
-        badge.visible = unread > 0
+        badge.bgcolor  = '#e67e22' if has_match else 'red'
+        badge.visible  = unread_count > 0
         page.update()
 
     def poll_notifications():
