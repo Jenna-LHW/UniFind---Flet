@@ -3,59 +3,69 @@ from api import register
 from storage import save_tokens
 from api import login
 
+BROWN = '#5c4f3a'
 ROLES = [('student', 'Student'), ('staff', 'Staff')]
-CATEGORIES = ['Electronics','Clothing','Accessories','Books & Stationery','ID & Cards','Bags','Keys','Other']
+
+def _field(label, icon, password=False, reveal=False, hint=None):
+    return ft.TextField(
+        label=label,
+        prefix_icon=icon,
+        password=password,
+        can_reveal_password=reveal,
+        hint_text=hint,
+        border_radius=12,
+        filled=True,
+        bgcolor='white',
+        border_color='#d6d1c8',
+        focused_border_color=BROWN,
+        content_padding=ft.padding.symmetric(horizontal=16, vertical=14),
+    )
 
 def register_view(page: ft.Page, go):
     page.title = 'UniFind — Register'
 
-    username   = ft.TextField(label='Username', prefix_icon=ft.Icons.PERSON)
-    email      = ft.TextField(label='UoM Email (@uom.ac.mu)', prefix_icon=ft.Icons.EMAIL)
-    role       = ft.Dropdown(label='Role', options=[ft.dropdown.Option(k, v) for k, v in ROLES])
-    student_id = ft.TextField(label='Student ID (if student)', prefix_icon=ft.Icons.BADGE)
-    phone      = ft.TextField(label='Phone', prefix_icon=ft.Icons.PHONE)
-    password   = ft.TextField(label='Password', password=True, can_reveal_password=True, prefix_icon=ft.Icons.LOCK)
-    password2  = ft.TextField(label='Confirm Password', password=True, can_reveal_password=True, prefix_icon=ft.Icons.LOCK)
+    username   = _field('Username', ft.Icons.PERSON_OUTLINE)
+    email      = _field('UoM Email', ft.Icons.EMAIL_OUTLINED, hint='you@uom.ac.mu')
+    role       = ft.Dropdown(
+        label='Role',
+        options=[ft.dropdown.Option(k, v) for k, v in ROLES],
+        border_radius=12,
+        filled=True,
+        bgcolor='white',
+        border_color='#d6d1c8',
+        focused_border_color=BROWN,
+        content_padding=ft.padding.symmetric(horizontal=16, vertical=14),
+    )
+    student_id = _field('Student ID (if student)', ft.Icons.BADGE_OUTLINED)
+    phone      = _field('Phone', ft.Icons.PHONE_OUTLINED)
+    password   = _field('Password', ft.Icons.LOCK_OUTLINE, password=True, reveal=True)
+    password2  = _field('Confirm Password', ft.Icons.LOCK_OUTLINE, password=True, reveal=True)
     error      = ft.Text('', color=ft.Colors.RED_600, size=13)
     success    = ft.Text('', color=ft.Colors.GREEN_600, size=13)
-    loading    = ft.ProgressRing(visible=False, width=20, height=20)
+    loading    = ft.ProgressRing(visible=False, width=22, height=22, color=BROWN)
 
     def do_register(e):
-        error.value   = ''
+        error.value = ''
         success.value = ''
-
         if not all([username.value, email.value, role.value, password.value, password2.value]):
             error.value = 'Please fill in all required fields.'
-            page.update()
-            return
-
+            page.update(); return
         if not email.value.endswith('@uom.ac.mu'):
             error.value = 'Only UoM email addresses are allowed.'
-            page.update()
-            return
-
+            page.update(); return
         if password.value != password2.value:
             error.value = 'Passwords do not match.'
-            page.update()
-            return
+            page.update(); return
 
-        loading.visible = True
-        page.update()
-
+        loading.visible = True; page.update()
         data = {
-            'username':   username.value.strip(),
-            'email':      email.value.strip(),
-            'role':       role.value,
-            'student_id': student_id.value.strip(),
-            'phone':      phone.value.strip(),
-            'password':   password.value,
+            'username': username.value.strip(), 'email': email.value.strip(),
+            'role': role.value, 'student_id': student_id.value.strip(),
+            'phone': phone.value.strip(), 'password': password.value,
         }
-
         status, resp = register(data)
         loading.visible = False
-
         if status == 201:
-            # Auto login after register
             s2, tokens = login(username.value.strip(), password.value)
             if s2 == 200:
                 save_tokens(tokens['access'], tokens['refresh'])
@@ -71,36 +81,55 @@ def register_view(page: ft.Page, go):
             page.update()
 
     return ft.Column([
+        # Header
+        ft.Column([
+            ft.Container(
+                content=ft.Image(src='logo.png', fit='contain'),
+                width=60, height=60,
+                border_radius=16,
+                bgcolor='white',
+                shadow=ft.BoxShadow(blur_radius=12, color='#1a000000'),
+                alignment=ft.Alignment(0, 0),
+            ),
+            ft.Text('Create Account', size=24, weight=ft.FontWeight.BOLD, color=BROWN),
+            ft.Text('Join the UniFind community', size=13, color='#9a8f80'),
+        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8),
+
+        ft.Container(height=8),
+
+        # Form card
         ft.Container(
             content=ft.Column([
-                ft.Text('UniFind', size=28, weight=ft.FontWeight.BOLD, color='#5c4f3a'),
-                ft.Text('University of Mauritius', size=13, color='#7a7670'),
-                ft.Divider(height=16, color='transparent'),
-                ft.Text('Create your account', size=20, weight=ft.FontWeight.W_600),
-                ft.Divider(height=10, color='transparent'),
-                username, email, role, student_id, phone, password, password2,
+                ft.Text('Personal Info', size=12, weight=ft.FontWeight.W_600,
+                        color='#9a8f80', style=ft.TextStyle(letter_spacing=0.8)),
+                username, email, role, student_id, phone,
+                ft.Container(height=4),
+                ft.Text('Security', size=12, weight=ft.FontWeight.W_600,
+                        color='#9a8f80', style=ft.TextStyle(letter_spacing=0.8)),
+                password, password2,
                 error, success,
-                ft.Divider(height=8, color='transparent'),
-                ft.Row([loading, ft.ElevatedButton(
-                    'Register',
-                    on_click=do_register,
-                    bgcolor='#5c4f3a',
-                    color='white',
-                    width=300,
-                    height=44,
-                )], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Container(height=4),
                 ft.Row([
-                    ft.Text('Already have an account?', size=13),
-                    ft.TextButton('Log In', on_click=lambda e: go('login')),
-                ], alignment=ft.MainAxisAlignment.CENTER),
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=10,
-            scroll=ft.ScrollMode.AUTO),
-            padding=40,
-            width=420,
+                    loading,
+                    ft.ElevatedButton(
+                        'Create Account',
+                        on_click=do_register,
+                        bgcolor=BROWN, color='white',
+                        height=50, expand=True,
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=14)),
+                    ),
+                ], spacing=10),
+            ], spacing=12),
+            padding=ft.padding.symmetric(horizontal=24, vertical=24),
             bgcolor='white',
-            border_radius=16,
-            shadow=ft.BoxShadow(blur_radius=20, color=ft.Colors.with_opacity(0.08, 'black')),
-        )
-    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll=ft.ScrollMode.AUTO)
+            border_radius=20,
+            shadow=ft.BoxShadow(blur_radius=20, color='#14000000', offset=ft.Offset(0, 4)),
+        ),
+
+        ft.Row([
+            ft.Text('Already have an account?', size=13, color='#7a7670'),
+            ft.TextButton('Log In', on_click=lambda e: go('login'),
+                         style=ft.ButtonStyle(color=BROWN)),
+        ], alignment=ft.MainAxisAlignment.CENTER),
+
+    ], spacing=16, scroll=ft.ScrollMode.AUTO, horizontal_alignment=ft.CrossAxisAlignment.CENTER)

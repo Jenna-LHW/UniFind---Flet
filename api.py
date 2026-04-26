@@ -112,7 +112,7 @@ def get_found_item(pk):
 
 # ── Reviews ──
 def get_reviews():
-    r = requests.get(f'{BASE}/reviews/')
+    r = requests.get(f'{BASE}/reviews/', headers=_headers())
     return r.status_code, r.json()
 
 def post_review(data):
