@@ -197,30 +197,30 @@ The palette is intentionally warm and paper-like, evoking campus noticeboards.
 The following features are planned or recommended for future development:
 
 ### Core Functionality
--**Push notifications** — Replace the 15-second polling thread with WebSocket or FCM push notifications for instant, battery-efficient alerts
--**Image gallery** — Allow multiple photos per lost/found report, not just one
--**Claim approval flow** — Let item reporters accept or reject claims from within the app, rather than only via the admin panel
--**Item status tracking** — Add `open`, `claimed`, and `resolved` statuses to listings so users know which items are still available
--**Chat / messaging** — Allow claimants and reporters to message each other directly once a claim is submitted, removing the need to share personal contact details
+-**Push notifications** — Replace the 15-second polling thread with WebSocket or FCM push notifications for instant, battery-efficient alerts  
+-**Image gallery** — Allow multiple photos per lost/found report, not just one  
+-**Claim approval flow** — Let item reporters accept or reject claims from within the app, rather than only via the admin panel  
+-**Item status tracking** — Add `open`, `claimed`, and `resolved` statuses to listings so users know which items are still available  
+-**Chat / messaging** — Allow claimants and reporters to message each other directly once a claim is submitted, removing the need to share personal contact details  
 
 ### Search & Discovery
--**Map / Geolocation** — When reporting an item, capture the device's GPS coordinates via `flet.Geolocator` and store them with the report. On the browse and item detail screens, render an embedded map (e.g. using a `flet.WebView` pointing to a Leaflet.js or Google Maps tile) so users can see exactly where an item was lost or found on campus. A dedicated map tab could plot all open reports as pins, colour-coded by type (red = lost, green = found), letting users spot clusters at a glance.
--**Smart matching** — Surface potential matches automatically when a new item is reported (e.g. "A blue umbrella was found near the Library — does it match your report?")
--**Saved searches** — Let users subscribe to a keyword or category and receive a notification when a matching item is posted
+-**Map / Geolocation** — When reporting an item, capture the device's GPS coordinates via `flet.Geolocator` and store them with the report. On the browse and item detail screens, render an embedded map (e.g. using a `flet.WebView` pointing to a Leaflet.js or Google Maps tile) so users can see exactly where an item was lost or found on campus. A dedicated map tab could plot all open reports as pins, colour-coded by type (red = lost, green = found), letting users spot clusters at a glance.  
+-**Smart matching** — Surface potential matches automatically when a new item is reported (e.g. "A blue umbrella was found near the Library — does it match your report?")  
+-**Saved searches** — Let users subscribe to a keyword or category and receive a notification when a matching item is posted  
 
 ### User Experience
--**Dark mode** — Support `ft.ThemeMode.DARK` with an equivalent dark colour palette
--**Pagination / infinite scroll** — The browse views currently load all items at once; add page-based or cursor-based pagination for performance at scale
--**Offline support** — Cache the last-fetched item list locally so the app is usable without a network connection
--**Camera integration** — Use `flet.FilePicker` in combination with the native camera intent (on Android/iOS builds) so users can take a photo directly when reporting an item rather than only selecting one from their gallery. On desktop, fall back to the standard file picker. Optionally auto-compress the image before upload to keep API payloads small.
+-**Dark mode** — Support `ft.ThemeMode.DARK` with an equivalent dark colour palette  
+-**Pagination / infinite scroll** — The browse views currently load all items at once; add page-based or cursor-based pagination for performance at scale  
+-**Offline support** — Cache the last-fetched item list locally so the app is usable without a network connection  
+-**Camera integration** — Use `flet.FilePicker` in combination with the native camera intent (on Android/iOS builds) so users can take a photo directly when reporting an item rather than only selecting one from their gallery. On desktop, fall back to the standard file picker. Optionally auto-compress the image before upload to keep API payloads small.  
 
 ### Platform & Deployment
--**Android / iOS packaging** — Use `flet build apk` and `flet build ipa` to distribute the app natively
--**Web build** — Deploy a web version (`flet build web`) accessible from any browser without installation
--**Environment configuration** — Replace the hardcoded `BASE` URL in `api.py` with a `.env` file or build-time config flag
+-**Android / iOS packaging** — Use `flet build apk` and `flet build ipa` to distribute the app natively  
+-**Web build** — Deploy a web version (`flet build web`) accessible from any browser without installation  
+-**Environment configuration** — Replace the hardcoded `BASE` URL in `api.py` with a `.env` file or build-time config flag  
 
 ### Security & Quality
--**Token refresh** — The `refresh_token` function in `api.py` exists but is not yet wired to auto-retry on 401 responses
--**Input validation** — Add client-side validation to all forms before the API call is made
--**Error boundary views** — Show a user-friendly error screen when an API call fails instead of silently doing nothing
+-**Token refresh** — The `refresh_token` function in `api.py` exists but is not yet wired to auto-retry on 401 responses  
+-**Input validation** — Add client-side validation to all forms before the API call is made  
+-**Error boundary views** — Show a user-friendly error screen when an API call fails instead of silently doing nothing  
 
